@@ -1,26 +1,26 @@
 import express, { Request, Response } from 'express';
 import multer from 'multer';
 import fs from 'fs';
-import { Client } from 'pg';
-import dotenv from 'dotenv';
+import { Pool } from 'pg';
 
 
 
-dotenv.config();
+
+
 const app = express();
-const port = process.env.PORT;
+const port = 5000;
 const uploadDir = 'uploads/';
-let datas: Array<{ priority: number, message: string, timestamp : Date }> = [];
+let datas: Array<{ priority_data: number, message_data: string, timestamp_data : Date }> = [];
 let isProcessing = false;
 
 // Connect to the PostgreSQL database
 
-const client = new Client({
-    user: process.env.DB_USER,
-    host: process.env.DB_HOST,
-    database: process.env.DB,
-    password: process.env.DB_PASSWORD,
-    port: parseInt(process.env.DB_PORT || ''),
+const client = new Pool({
+    user: 'postgres',
+    host: 'db',
+    database: 'intern_developer_plus',
+    password: 'mattia_123',
+    port: 5432,
 });
 
 client.connect()
@@ -66,16 +66,16 @@ const saveDatas = (file: any) => {
     });
 
     const dataObjects = newDatas.map((d) => {
-        const priority = parseInt(d.charAt(0));
-        const message = d.substring(2);
-        const timestamp = new Date();
+        const priority_data = parseInt(d.charAt(0));
+        const message_data = d.substring(2);
+        const timestamp_data = new Date();
         
-        return { priority, message, timestamp };
+        return { priority_data, message_data, timestamp_data };
     });
 
     datas = datas.concat(dataObjects); 
 
-    datas.sort((a, b) => b.priority - a.priority);
+    datas.sort((a, b) => b.priority_data - a.priority_data);
     
     // Sort the datas based on the first character in descending order
 
@@ -97,17 +97,17 @@ const sendDatasToDatabase = async (filesAtTheBeginning: number) => {
    
     
     if (datas.length === 0 ) {
-        console.log('No datas to send');
+        
         return true;
     }
 
     if (filesAtTheBeginning != fs.readdirSync(uploadDir).length) {
-        console.log('There are still files to send');
+       
         isProcessing = true;
         return true;
     }
 
-    const first15Elements: Array<{ priority: number, message: string, timestamp : Date }> = datas.splice(0, 15); 
+    const first15Elements: Array<{ priority_data: number, message_data: string, timestamp_data : Date }> = datas.splice(0, 15); 
     setTimeout(() => {
         sendToDatabase(first15Elements);
         sendDatasToDatabase(filesAtTheBeginning);
@@ -115,18 +115,18 @@ const sendDatasToDatabase = async (filesAtTheBeginning: number) => {
 
 }
 
-const sendToDatabase = (dataToSend: Array<{ priority: number, message: string, timestamp : Date }>) => {
+const sendToDatabase = (dataToSend: Array<{ priority_data: number, message_data: string, timestamp_data : Date }>) => {
     
    
 
     dataToSend.forEach((d) => {
-        query(d.priority, d.message, d.timestamp);
+        query(d.priority_data, d.message_data, d.timestamp_data);
     });
     
 }
 
-const query = (priority: number, message: string, currentDate: Date) => {
-    client.query('INSERT INTO datas (priority, message, timestamp) VALUES ($1, $2, $3)', [priority, message, currentDate])
+const query = (priority_data: number, message_data: string, currentDate_data: Date) => {
+    client.query('INSERT INTO datas (priority_data, message_data, timestamp_data) VALUES ($1, $2, $3)', [priority_data, message_data, currentDate_data])
 }
 
 
@@ -154,8 +154,6 @@ app.post('/importDataFromFile', (req: Request, res: Response) => {
             console.log(err);
             return res.status(500).json(err);
         }
-        console.log("dati ricevuti");
-        console.log("numero dati: " + datas.length);
         saveDatas((req as any).file);
         return res.status(200).send("Datas received");
     });
@@ -163,8 +161,8 @@ app.post('/importDataFromFile', (req: Request, res: Response) => {
 
 app.get('/data', async (req: Request, res: Response) => {
     const from = req.query.data;
-    const limit = req.query.limit;
-    console.log(from, limit);
+    const limit = req.query.number;
+    
 
     // Costruisci la query in base ai parametri della query string
     let query = 'SELECT * FROM datas';
@@ -172,7 +170,7 @@ app.get('/data', async (req: Request, res: Response) => {
     if (from) {
         const fromDate = new Date(from as string);
         if (!isNaN(fromDate.getTime())) {
-            query += ` WHERE timestamp >= '${fromDate.toISOString()}'`;
+            query += ` WHERE timestamp_data >= '${fromDate.toISOString()}'`;
         } else {
             res.status(400).send('Invalid from date');
             return;

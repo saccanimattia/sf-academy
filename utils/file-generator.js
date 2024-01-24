@@ -38,11 +38,11 @@ if (!fs.existsSync(uploadDir)) {
 }
 const filePath = '_DIRECTORY_/_FILENAME_.txt';
 const updatedFilePath = filePath.replace('_DIRECTORY_', uploadDir);
-console.log(updatedFilePath);
+
 const generatedRandomName = getRandomNumericString(10);
-console.log(generatedRandomName);
+
 const finalFilePath = updatedFilePath.replace('_FILENAME_', generatedRandomName);
-console.log(finalFilePath);
+
 
 generateRandomFile(finalFilePath);
 

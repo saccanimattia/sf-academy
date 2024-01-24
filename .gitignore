@@ -1,2 +1,2 @@
-application/node_modules
-application/.env
+node_modules
+.env
